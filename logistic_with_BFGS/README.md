@@ -1,1 +1,1 @@
-A BFGS algorithms implementation with Strong-Wolfe approach on line searching. 
+BFGS algorithms implementation with Strong-Wolfe approach on line searching. 

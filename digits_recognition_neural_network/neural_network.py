@@ -42,18 +42,18 @@ class NeuralNetwork:
             inputs = layer.prop(inputs)
         return inputs
 
-    def train(self, dataset, num_of_epochs, mini_batch_size, learning_rate, test_data=None):
+    def train(self, dataset, num_of_epochs, mini_batch_size, learning_rate, validation_data=None):
         """
         train the network with a given dataset.
-        :param test_data: used to test accuracy after each epoch
+        :param validation_data: used to test accuracy after each epoch
         :param dataset: training data
         :param num_of_epochs: times to run through the whole training set
         :param mini_batch_size: batch size in a single run of SGD
         :param learning_rate: step length when taking stochastic gradient descent
         :return:
         """
-        if test_data:
-            test_data = list(test_data)
+        if validation_data:
+            validation_data = list(validation_data)
         dataset = list(dataset)
         data_size = len(dataset)
         mini_batch_size = min(data_size, mini_batch_size)
@@ -64,8 +64,8 @@ class NeuralNetwork:
                             range(0, data_size, mini_batch_size)]
             for mini_batch in mini_batches:
                 self.process_mini_batch(mini_batch, learning_rate)
-            if test_data:
-                print("completed epoch %d, accuracy %f" % ((i + 1), self.test(test_data)))
+            if validation_data:
+                print("completed epoch %d, accuracy %f" % ((i + 1), self.get_accuracy(validation_data)))
             else:
                 print("completed epoch %d" % (i + 1))
 
@@ -99,7 +99,7 @@ class NeuralNetwork:
                 this_layer.weights = this_layer.weights - learning_rate * partial_ws[i] / batch_size
                 this_layer.biases = this_layer.biases - learning_rate * partial_bs[i] / batch_size
 
-    def test(self, dataset):
+    def get_accuracy(self, dataset):
         dataset = list(dataset)
         size = len(dataset)
         test_results = [(np.argmax(self.prop(x)), y) for (x, y) in dataset]
@@ -112,5 +112,5 @@ if __name__ == "__main__":
 
     training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
     net = NeuralNetwork([784, 30, 10])
-    net.train(training_data, 30, 10, 3.0, test_data)
-    print("posterior accuracy on test data %f" % net.test(validation_data))
+    net.train(training_data, 30, 10, 3.0, validation_data)
+    print("posterior accuracy on test data %f" % net.test(test_data))
