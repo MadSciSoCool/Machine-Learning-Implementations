@@ -2,17 +2,8 @@ import numpy as np
 import random
 
 
-def single_sigmoid(x):
-    if x >= 0:
-        z = np.exp(-x)
-        return 1 / (1 + z)
-    else:
-        z = np.exp(x)
-        return z / (1 + z)
-
-
 def sigmoid(x):
-    return np.array([single_sigmoid(xi) for xi in x])
+    return 1. / (1. + np.exp(-x))
 
 
 def dif_sigmoid(x):
@@ -49,19 +40,23 @@ class ConvolutionalLayer(Layer):
         super().__init__(last_layer)
         self.im_size = im_size
         self.kernel_size = kernel_size
-        self.kernels = np.random.randn(*kernel_size)
-        # only used in training
         C, H, W = self.im_size
         O, C, kh, kw = self.kernel_size
+        output_size = (O, H - kh + 1, W - kw + 1)
+        self.kernels = np.random.randn(*kernel_size)
+        self.biases = np.random.randn(*output_size)
+        # only used in training
         self._col = np.zeros((C, H - kh + 1, W - kw + 1, kh, kw))
-        self._activations = np.zeros((O, H - kh + 1, W - kw + 1))
+        self._z = np.zeros(output_size)
+        self._activations = np.zeros(output_size)
 
     def feed_forward(self, inputs):
         # col shape (C, H - kh + 1, W - kw + 1, kh, kw)
         # kernel shape (O, C ,kh, kw)
         # output shape (O, H - kh + 1, W - kw + 1)
         axes = [(1, 2, 3), (0, 3, 4)]
-        self._activations = np.tensordot(self.kernels, self._ff_im2col(inputs), axes=axes)
+        self._z = np.tensordot(self.kernels, self._ff_im2col(inputs), axes=axes) + self.biases
+        self._activations = sigmoid(self._z)
         return self._activations
 
     def _ff_im2col(self, im):
@@ -103,8 +98,16 @@ class ConvolutionalLayer(Layer):
         # error: (O, H - kh + 1, W - kw + 1) self._col: (C, H - kh + 1, W - kw + 1, kh, kw)
         return np.tensordot(error, self._col, axes=[(1, 2), (1, 2)])
 
+    def get_biases_error(self, error):
+        return error
+
     def update(self, error, learning_rate):
         self.kernels = self.kernels - learning_rate * self.get_kernels_error(error)
+        self.biases = self.biases - learning_rate * self.get_biases_error(error)
+
+    def back_prop_activation(self, error):
+        # this function back-propagates the error across the activation function
+        return error * dif_sigmoid(self._z)
 
 
 class MaxPoolingLayer(Layer):
@@ -281,5 +284,5 @@ if __name__ == "__main__":
 
     training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
     net = ConvolutionalNeuralNetwork()
-    net.train(training_data, 30, 10, 3.0, validation_data)
+    net.train(training_data, 30, 10, 3., validation_data)
     print("posterior accuracy on test data %f" % net.get_accuracy(test_data))
