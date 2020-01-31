@@ -185,7 +185,7 @@ class FullyConnectedLayer(Layer):
 
     def back_prop_activation(self, error):
         # this function back-propagates the error across the activation function
-        return error * dif_sigmoid(self._z)
+        return np.reshape(error, (self.neuron_size, 1)) * dif_sigmoid(self._z)
 
     def get_weights_error(self, error):
         input_size = np.prod(self.input_size)
@@ -237,7 +237,16 @@ class ConvolutionalNeuralNetwork:
         self.layers.append_layer(MaxPoolingLayer(input_size=(3, 24, 24),
                                                  pool_size=(2, 2),
                                                  last_layer=self.layers.get_last_layer()))
-        self.layers.append_layer(FullyConnectedLayer(input_size=(3, 12, 12),
+        self.layers.append_layer(ConvolutionalLayer(im_size=(3, 12, 12),
+                                                    kernel_size=(3, 3, 5, 5),
+                                                    last_layer=self.layers.get_last_layer()))
+        self.layers.append_layer(MaxPoolingLayer(input_size=(3, 8, 8),
+                                                 pool_size=(2, 2),
+                                                 last_layer=self.layers.get_last_layer()))
+        self.layers.append_layer(FullyConnectedLayer(input_size=(3, 4, 4),
+                                                     neuron_size=30,
+                                                     last_layer=self.layers.get_last_layer()))
+        self.layers.append_layer(FullyConnectedLayer(input_size=30,
                                                      neuron_size=10,
                                                      last_layer=self.layers.get_last_layer()))
 
@@ -284,5 +293,5 @@ if __name__ == "__main__":
 
     training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
     net = ConvolutionalNeuralNetwork()
-    net.train(training_data, 30, 10, 3., validation_data)
+    net.train(training_data, 30, 10, 2., validation_data)
     print("posterior accuracy on test data %f" % net.get_accuracy(test_data))
