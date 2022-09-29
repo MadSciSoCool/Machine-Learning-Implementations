@@ -113,4 +113,4 @@ if __name__ == "__main__":
     training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
     net = NeuralNetwork([784, 30, 10])
     net.train(training_data, 30, 10, 3.0, validation_data)
-    print("posterior accuracy on test data %f" % net.test(test_data))
+    print("posterior accuracy on test data %f" % net.get_accuracy(test_data))

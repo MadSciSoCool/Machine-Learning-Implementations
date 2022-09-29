@@ -273,11 +273,13 @@ class ConvolutionalNeuralNetwork:
 
     def process_mini_batch(self, mini_batch, learning_rate):
         batch_size = len(mini_batch)
+        errors = []
         for x, y in mini_batch:
             # feed forward
             pred_y = self.feed_forward(x)
             # back propagation of errors
-            error = pred_y - y
+            errors.append(pred_y - y)
+        for error in errors:
             self.layers.back_prop(error, learning_rate / batch_size)
 
     def get_accuracy(self, dataset):
@@ -293,5 +295,5 @@ if __name__ == "__main__":
 
     training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
     net = ConvolutionalNeuralNetwork()
-    net.train(training_data, 30, 10, 2., validation_data)
+    net.train(training_data, 30, 20, .5, validation_data)
     print("posterior accuracy on test data %f" % net.get_accuracy(test_data))
